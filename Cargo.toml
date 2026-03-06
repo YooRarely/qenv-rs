@@ -6,6 +6,7 @@ authors = ["YooRarely <yoorarely@gmail.com>"]
 keywords = ["env", "dotenv"]
 license = "MIT"
 readme = "README.md"
+description = "Define environment variables with macros and access them easily."
 repository = "https://github.com/YooRarely/qenv-rs"
 
 [dependencies]
