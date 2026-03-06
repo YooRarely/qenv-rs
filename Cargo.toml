@@ -6,7 +6,7 @@ authors = ["YooRarely <yoorarely@gmail.com>"]
 keywords = ["env", "dotenv"]
 license = "MIT"
 readme = "README.md"
-
+repository = "https://github.com/YooRarely/qenv-rs"
 
 [dependencies]
 dotenvy = { version = "0.15", optional = true }

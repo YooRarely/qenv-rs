@@ -4,7 +4,7 @@
 
 [![Crates.io](https://img.shields.io/crates/v/qenv.svg)](https://crates.io/crates/qenv)
 [![Documentation](https://docs.rs/qenv/badge.svg)](https://docs.rs/qenv)
-[![License](https://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/your-user/qenv)
+[![License](https://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/YooRarely/qenv-rs)
 
 ## ✨ 特性
 
@@ -20,7 +20,7 @@
 ```toml
 [dependencies]
 qenv = "0.1.0"
-
+```
 
 ## 🛠️ 快速开始
 
