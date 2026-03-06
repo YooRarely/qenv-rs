@@ -1,0 +1,22 @@
+[package]
+name = "qenv"
+version = "0.1.0"
+edition = "2024"
+authors = ["YooRarely <yoorarely@gmail.com>"]
+keywords = ["env", "dotenv"]
+license = "MIT"
+readme = "README.md"
+
+
+[dependencies]
+dotenvy = { version = "0.15", optional = true }
+
+
+[features]
+default = ["dotenv"]
+dotenv = ["dep:dotenvy"]
+
+
+[[example]]
+name = "basic"
+description = "Showcases the basic usage of qenv: get, take, and macros."
