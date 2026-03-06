@@ -39,6 +39,24 @@ pub trait EnvKey {
 }
 pub struct EnvVar<K: EnvKey>(pub K);
 
+// --- 让 format!("{}", env::PORT) 成为可能 ---
+impl<K: EnvKey> std::fmt::Display for EnvVar<K> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        // 直接调用内部的 try_get 并将结果写入 formatter
+        write!(f, "{}", self.get())
+    }
+}
+
+// --- 进阶魔法：让 env::PORT 像 &str 一样工作 ---
+impl<K: EnvKey> std::ops::Deref for EnvVar<K> {
+    type Target = str;
+
+    fn deref(&self) -> &Self::Target {
+        self.get()
+    }
+}
+
+
 impl<K: EnvKey> EnvVar<K> {
     pub fn get(&self) -> &str {
         self.try_get().expect("QEnv: Get failed")

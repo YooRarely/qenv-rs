@@ -6,6 +6,7 @@ qenv::define! {
     IS_DEBUG: "false", // 布尔转换测试
 }
 
+
 fn main() {
     // 2. 初始化（会自动尝试读取 .env）
     // 我们用 .expect 因为如果初始化失败，通常是重复调用了
@@ -13,9 +14,8 @@ fn main() {
     println!("--- 🛠️  QENV 示例演示 ---");
 
     // 3. 使用 .get() 获取原始引用 (零克隆)
-    let db_url = DATABASE_URL.get();
-    println!("📡 Database: {}", db_url);
-
+    println!("📡 Database: {}", DATABASE_URL);
+	
     // 4. 使用 .take() 自动转换类型
     let port: u16 =  PORT.take();
     let is_debug: bool =IS_DEBUG.take();

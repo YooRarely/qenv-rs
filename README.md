@@ -1,109 +1,113 @@
-既然你已经重构了底层架构并去除了冗余的全局函数，README 也需要随之“进化”，重点突出**对象式调用**带来的丝滑体验。
-
-以下是为你优化后的 **README.md**。我修正了版本号，精简了 API 说明，并加入了你发现的那个“模块化管理”的最佳实践建议。
 
 ---
 
-# 🚀 QEnv (v0.2.0)
+# 🚀 QEnv (v0.2.1)
 
 一个极致轻量、类型安全、零克隆（Zero-Clone）的 Rust 环境变量管理框架。
 
 [![Crates.io](https://img.shields.io/crates/v/qenv.svg)](https://crates.io/crates/qenv) [![Documentation](https://docs.rs/qenv/badge.svg)](https://docs.rs/qenv) [![License](https://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/YooRarely/qenv-rs)
 
-## ✨ v0.2.0 核心进化
+## ✨ v0.2.1 核心魔法
 
-* 🪄 **无需 Trait 导入**: 通过 `define!` 宏生成的常量可以直接调用 `.get()` 或 `.take()`。
-* 🛡️ **强类型契约**: 移除了不可控的字符串接口，强制通过 Tag 访问，从根源消除拼写错误。
-* 🧩 **模块化友好**: 支持在独立模块（如 `env.rs`）中批量定义，全项目路径访问。
+* 🪄 **自动解引用 (Deref)**: 代理对象可直接作为 `&str` 使用，无需调用 `.get()`。
+* 📺 **原生显示 (Display)**: 支持在 `format!` 或 `println!` 中直接占位。
+* 🛡️ **强类型契约**: 彻底摒弃字符串硬编码，通过宏生成 ZST Tag，编译期消除拼写隐患。
+* ⚡ **零克隆 (Zero-Clone)**: 核心基于 `str` 引用，读取性能与直接访问常量无异。
 
 ## 📦 安装
 
-在 `Cargo.toml` 中添加：
-
 ```toml
 [dependencies]
-qenv = "0.2.0"
+qenv = "0.2.1"
+
 ```
 
 ## 🛠️ 快速开始
 
-### 1. 定义与初始化
+### 1. 定义环境变量
 
-建议在一个集中的位置（如 `mod env`）定义你的环境变量：
+建议在 `src/env.rs` 中统一管理：
 
 ```rust
-// src/env.rs
 qenv::define! {
-    PORT: "8080",                               // 带默认值
-    DATABASE_URL: "postgres://localhost:5432",  // 必填项（若 .env/系统环境无此值则报错）
-    IS_DEBUG: "false"                           // 自动类型转换支持
+    PORT: "8080",                               // 默认值
+    DATABASE_URL: "postgres://localhost:5432",  // 环境变量覆盖
+    RUST_LOG: "info"
 }
+
 ```
 
-### 2. 初始化与使用
+### 2. 极致丝滑的使用体验
 
 ```rust
 use qenv;
-mod env; // 引入你定义的变量
+mod env;
 
 fn main() {
-    // 1. 初始化（自动加载 .env 并缓存到内存）
     qenv::init().expect("QEnv 初始化失败");
 
-    // 2. 极致丝滑的访问体验 (零克隆获取 &'static str)
-    let db_url = env::DATABASE_URL.get();
-    
-    // 3. 自动类型转换 (.take())
-    let port: u16 = env::PORT.take();
-    let is_debug: bool = env::IS_DEBUG.take();
+    // ✨ 魔法 1: 直接作为 &str 传参 (Deref 强制转换)
+    // 无需 .get()，编译器会自动处理
+    tracing_subscriber::fmt()
+        .with_env_filter(&env::RUST_LOG) 
+        .init();
 
-    println!("Listening on {}, debug: {}", port, is_debug);
+    // ✨ 魔法 2: 直接在 format! 中使用 (Display 实现)
+    let addr = format!("0.0.0.0:{}", env::PORT);
+    
+    // 🎯 强类型转换
+    let port: u16 = env::PORT.take();
+
+    println!("🚀 Server running at http://{}", addr);
 }
+
 ```
 
-### 3. 安全处理 (Try 系列)
+## 🧩 高级特性
 
-如果不确定变量是否存在，或者需要处理转换错误，可以使用 `try_` 方法：
+### 安全处理 (Try 系列)
+
+当你需要精细控制变量缺失或解析失败的情况：
 
 ```rust
-// 不带默认值的变量
-qenv::define!(OPTIONAL_CONFIG);
-
-match OPTIONAL_CONFIG.try_get() {
-    Ok(val) => println!("Value: {}", val),
-    Err(e) => eprintln!("Handle error: {}", e),
+match env::DATABASE_URL.try_get() {
+    Ok(url) => connect(url),
+    Err(e) => panic!("配置错误: {}", e),
 }
 
-// 尝试转换类型
-if let Ok(val) = env::PORT.try_take::<u32>() {
-    // ...
+if let Ok(debug) = env::IS_DEBUG.try_take::<bool>() {
+    // 执行调试逻辑
 }
+
 ```
 
-## 🧩 进阶配置
+### 零开销抽象
 
-### 性能说明
+QEnv 内部使用结构体代理模式。定义的每个变量在内存中都是 **0 字节** (ZST)，方法调用在编译后会被内联。这意味着你获得的不仅仅是语法糖，还有不打折扣的性能。
 
-QEnv 在初始化时将所有环境变量一次性存入 `OnceLock<HashMap>`。后续所有的 `.get()` 操作均返回 **字符串引用**。
-这意味着在你的业务逻辑中频繁读取环境变量是**零开销**的，完全不需要 `clone()`。
+### 可选特性
 
-### 关闭默认的 Dotenv 支持
+| Feature | 描述 | 默认开启 |
+| --- | --- | --- |
+| `dotenv` | 支持自动加载 `.env` 文件 | 是 |
 
-在 Docker 环境或生产环境中，你可能不需要 `.env` 文件支持：
+若在生产环境（如 K8s/Docker）不需要加载 `.env`，可禁用以减少依赖：
 
 ```toml
-[dependencies]
-qenv = { version = "0.2.0", default-features = false }
+qenv = { version = "0.2.1", default-features = false }
+
 ```
 
-## 📑 错误类型说明
+## 📑 错误处理
 
-`qenv` 提供结构化的 `EnvError` 以便精确处理异常：
+`qenv` 提供清晰的错误分类：
 
-* `InitializeError`: 重复调用 `init()`。
-* `NotInitialized`: 未调用 `init()` 就尝试读取。
-* `Missing(name)`: 变量缺失且没有默认值。
-* `ParseError`: 字符串转换为目标类型（如 `u16`, `f64`, `bool`）失败。
+* `InitializeError`: 重复初始化。
+* `NotInitialized`: 未执行 `init()`。
+* `Missing(name)`: 缺失且无默认值。
+* `ParseError`: 类型转换失败。
+
+---
 
 ## 🤝 贡献
 
