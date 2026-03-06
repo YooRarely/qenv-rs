@@ -7,7 +7,7 @@
 
 [![Crates.io](https://img.shields.io/crates/v/qenv.svg)](https://crates.io/crates/qenv) [![Documentation](https://docs.rs/qenv/badge.svg)](https://docs.rs/qenv) [![License](https://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/YooRarely/qenv-rs)
 
-## ✨ v0.2.1 核心魔法
+## ✨ v0.2.2 核心魔法
 
 * 🪄 **自动解引用 (Deref)**: 代理对象可直接作为 `&str` 使用，无需调用 `.get()`。
 * 📺 **原生显示 (Display)**: 支持在 `format!` 或 `println!` 中直接占位。
@@ -18,7 +18,7 @@
 
 ```toml
 [dependencies]
-qenv = "0.2.1"
+qenv = "0.2.2"
 
 ```
 
@@ -94,7 +94,7 @@ QEnv 内部使用结构体代理模式。定义的每个变量在内存中都是
 若在生产环境（如 K8s/Docker）不需要加载 `.env`，可禁用以减少依赖：
 
 ```toml
-qenv = { version = "0.2.1", default-features = false }
+qenv = { version = "0.2.2", default-features = false }
 
 ```
 
