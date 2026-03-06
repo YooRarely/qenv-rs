@@ -13,19 +13,19 @@ fn main() {
     println!("--- 🛠️  QENV 示例演示 ---");
 
     // 3. 使用 .get() 获取原始引用 (零克隆)
-    let db_url = qenv::get(DATABASE_URL);
+    let db_url = DATABASE_URL.get();
     println!("📡 Database: {}", db_url);
 
     // 4. 使用 .take() 自动转换类型
-    let port: u16 =  qenv::take(PORT);
-    let is_debug: bool = qenv::take(IS_DEBUG);
+    let port: u16 =  PORT.take();
+    let is_debug: bool =IS_DEBUG.take();
 
     println!("🔌 Port: {}", port);
     println!("🐞 Debug mode: {}", is_debug);
 
     // 5. 安全处理测试 (try_get)
     qenv::define!(OPTIONAL_VAR);
-    match qenv::try_get(OPTIONAL_VAR) {
+    match OPTIONAL_VAR.try_get() {
         Ok(val) => println!("Found optional: {}", val),
         Err(_) => println!("💡 OPTIONAL_VAR is missing as expected"),
     }
