@@ -53,9 +53,10 @@ impl<K: EnvKey> std::ops::Deref for EnvVar<K> {
     }
 }
 impl<K: EnvKey> AsRef<str> for EnvVar<K> {
-    fn as_ref(&self) -> &str { self.get() }
+    fn as_ref(&self) -> &str {
+        self.get()
+    }
 }
-
 
 impl<K: EnvKey> EnvVar<K> {
     pub fn get(&self) -> &str {
@@ -113,5 +114,15 @@ macro_rules! define {
             }
             pub const $name: $crate::EnvVar<$name::Tag> = $crate::EnvVar($name::Tag);
         )*
+		/// 自动生成的初始化函数，用于校验当前宏定义的所有变量
+        pub fn init() -> Result<(), $crate::EnvError> {
+            // 1. 确保全局缓存已加载
+            $crate::init()?;
+            // 2. 逐个校验变量（只要有一个缺失且无默认值，就报错）
+            $(
+               let _ = $name.try_get()?;
+            )*
+            Ok(())
+        }
     };
 }

@@ -1,53 +1,53 @@
 
 ---
 
-# 🚀 QEnv (v0.2.1)
+# 🚀 QEnv (v0.3.0)
 
-一个极致轻量、类型安全、零克隆（Zero-Clone）的 Rust 环境变量管理框架。
+一个极致轻量、类型安全、零克隆（Zero-Clone）且具备**启动校验**功能的 Rust 环境变量管理框架。
 
 [![Crates.io](https://img.shields.io/crates/v/qenv.svg)](https://crates.io/crates/qenv) [![Documentation](https://docs.rs/qenv/badge.svg)](https://docs.rs/qenv) [![License](https://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/YooRarely/qenv-rs)
 
-## ✨ v0.2.2 核心魔法
+## ✨ v0.3.0 核心魔法
 
-* 🪄 **自动解引用 (Deref)**: 代理对象可直接作为 `&str` 使用，无需调用 `.get()`。
-* 📺 **原生显示 (Display)**: 支持在 `format!` 或 `println!` 中直接占位。
-* 🛡️ **强类型契约**: 彻底摒弃字符串硬编码，通过宏生成 ZST Tag，编译期消除拼写隐患。
-* ⚡ **零克隆 (Zero-Clone)**: 核心基于 `str` 引用，读取性能与直接访问常量无异。
+* 🛡️ **启动即校验 (Fail-Fast)**: 宏自动生成的 `init()` 会检查对应缺失配置，确保程序不会在运行时因缺少环境变量而崩溃。
+* 🪄 **自动解引用 (Deref & AsRef)**: 代理对象可直接作为 `&str` 使用，完美兼容 `tracing`、`std::fs` 等标准库接口。
+* 📺 **原生显示 (Display)**: 支持在 `format!` 或 `println!` 中直接占位，无需 `.get()`。
+* ⚡ **零克隆 (Zero-Clone)**: 基于静态生命周期引用，读取性能等同于直接访问常量。
 
 ## 📦 安装
 
 ```toml
 [dependencies]
-qenv = "0.2.2"
-
+qenv = "0.3.0"
 ```
 
 ## 🛠️ 快速开始
 
 ### 1. 定义环境变量
 
-建议在 `src/env.rs` 中统一管理：
+建议在独立模块（如 `src/env.rs`）中使用宏定义，这会自动在该模块下生成 `init()` 函数：
 
 ```rust
+// src/env.rs
+use qenv;
 qenv::define! {
     PORT: "8080",                               // 默认值
-    DATABASE_URL: "postgres://localhost:5432",  // 环境变量覆盖
+    DATABASE_URL: "postgres://localhost:5432",  // 必填项（若无默认值且环境缺失则 init 报错）
     RUST_LOG: "info"
 }
-
 ```
 
-### 2. 极致丝滑的使用体验
+### 2. 初始化与使用
 
 ```rust
-use qenv;
+
 mod env;
 
 fn main() {
-    qenv::init().expect("QEnv 初始化失败");
+    // ✨ 核心进化：调用模块级 init()，自动加载 .env 并校验所有定义的变量
+    env::init().expect("QEnv 校验失败：缺少必要的环境变量");
 
-    // ✨ 魔法 1: 直接作为 &str 传参 (Deref 强制转换)
-    // 无需 .get()，编译器会自动处理
+    // ✨ 魔法 1: 直接作为 &str 传参 (兼容 AsRef/Deref)
     tracing_subscriber::fmt()
         .with_env_filter(&env::RUST_LOG) 
         .init();
@@ -60,53 +60,42 @@ fn main() {
 
     println!("🚀 Server running at http://{}", addr);
 }
-
 ```
 
-## 🧩 高级特性
+## 🧩 进阶特性
 
-### 安全处理 (Try 系列)
+### 模块化管理
 
-当你需要精细控制变量缺失或解析失败的情况：
+你可以根据功能定义多个环境模块，并分别初始化：
 
 ```rust
-match env::DATABASE_URL.try_get() {
-    Ok(url) => connect(url),
-    Err(e) => panic!("配置错误: {}", e),
+mod db_env {
+	use qenv;
+	qenv::define! { DB_URL } 
+}
+mod s3_env { 
+	use qenv;
+	qenv::define! { S3_KEY, S3_REGION: "us-east-1" } 
 }
 
-if let Ok(debug) = env::IS_DEBUG.try_take::<bool>() {
-    // 执行调试逻辑
+fn main() {
+    db_env::init().unwrap(); // 仅校验数据库相关
+    s3_env::init().unwrap(); // 仅校验 S3 相关
 }
-
 ```
 
 ### 零开销抽象
 
-QEnv 内部使用结构体代理模式。定义的每个变量在内存中都是 **0 字节** (ZST)，方法调用在编译后会被内联。这意味着你获得的不仅仅是语法糖，还有不打折扣的性能。
+QEnv 内部使用 **ZST (Zero Sized Types)**。定义的每个变量在内存中都不占用空间，所有的 `.get()`、`.take()` 方法调用都会被编译器内联优化。
 
-### 可选特性
+## 📑 错误处理说明
 
-| Feature | 描述 | 默认开启 |
-| --- | --- | --- |
-| `dotenv` | 支持自动加载 `.env` 文件 | 是 |
+`qenv` 提供结构化的 `EnvError` 以便精确处理异常：
 
-若在生产环境（如 K8s/Docker）不需要加载 `.env`，可禁用以减少依赖：
-
-```toml
-qenv = { version = "0.2.2", default-features = false }
-
-```
-
-## 📑 错误处理
-
-`qenv` 提供清晰的错误分类：
-
-* `InitializeError`: 重复初始化。
-* `NotInitialized`: 未执行 `init()`。
-* `Missing(name)`: 缺失且无默认值。
-* `ParseError`: 类型转换失败。
-
+* `InitializeError`: 全局缓存重复初始化。
+* `NotInitialized`: 未执行 `init()` 导致的读取失败。
+* `Missing(name)`: 变量缺失且没有提供默认值。
+* `ParseError`: 字符串转换为目标类型（如 `u16`, `bool`）失败。
 ---
 
 ## 🤝 贡献
