@@ -57,6 +57,17 @@ impl<K: EnvKey> AsRef<str> for EnvVar<K> {
         self.get()
     }
 }
+impl<K: EnvKey> From<EnvVar<K>> for String {
+    fn from(var: EnvVar<K>) -> Self {
+        var.get().to_string()
+    }
+}
+
+impl<K: EnvKey> From<&EnvVar<K>> for String {
+    fn from(var: &EnvVar<K>) -> Self {
+        var.get().to_string()
+    }
+}
 
 impl<K: EnvKey> EnvVar<K> {
     pub fn get(&self) -> &str {

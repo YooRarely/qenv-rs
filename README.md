@@ -1,13 +1,13 @@
 
 ---
 
-# 🚀 QEnv (v0.3.0)
+# 🚀 QEnv (v0.3)
 
 一个极致轻量、类型安全、零克隆（Zero-Clone）且具备**启动校验**功能的 Rust 环境变量管理框架。
 
 [![Crates.io](https://img.shields.io/crates/v/qenv.svg)](https://crates.io/crates/qenv) [![Documentation](https://docs.rs/qenv/badge.svg)](https://docs.rs/qenv) [![License](https://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/YooRarely/qenv-rs)
 
-## ✨ v0.3.0 核心魔法
+## ✨ v0.3 核心魔法
 
 * 🛡️ **启动即校验 (Fail-Fast)**: 宏自动生成的 `init()` 会检查对应缺失配置，确保程序不会在运行时因缺少环境变量而崩溃。
 * 🪄 **自动解引用 (Deref & AsRef)**: 代理对象可直接作为 `&str` 使用，完美兼容 `tracing`、`std::fs` 等标准库接口。
@@ -18,7 +18,7 @@
 
 ```toml
 [dependencies]
-qenv = "0.3.0"
+qenv = "0.3"
 ```
 
 ## 🛠️ 快速开始
